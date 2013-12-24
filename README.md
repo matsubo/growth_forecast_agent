@@ -1,8 +1,25 @@
+OS monitor for GrowthForecast
+=========================
 
+Currently, Mac OS X is available.
 
-download and install to the /Application
-- http://www.bresink.com/osx/0TemperatureMonitor/download.php
+Standalone
+-------------------------
 
-After the installation, start the application and install driver as the menu suggested.
+```
+% git clone git@github.com:matsubo/growth_forecast_agent.git
+% cd growth_forecast_agent
+% php bin/main.php
+```
 
+Install via Composer
+-------------------------
+
+composer.json
+```
+  "require": {
+    "matsubo/growth_forecast_agent": "1.*",
+  }
+
+```
 
