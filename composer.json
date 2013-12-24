@@ -3,6 +3,6 @@
     "psr-0": {"Matsubo\\": "src/"}
   },
   "require": {
-    "monolog/monolog": "1.0.*"
+    "monolog/monolog": "1.*"
   }
 }

@@ -2,35 +2,40 @@
 namespace Matsubo\GrowthForecast\Client;
 /**
  *  Mac OS X client for GrowthForecast
+ *
  */
 class MacOS
 {
-  private $host = '';
+  private $host   = 'http://localhost:5125';
   private $logger = null;
+  private $service = '';
+  private $section = '';
   /**
-   * __construct 
-   * 
+   * __construct
+   *
    * @access public
    * @return void
    */
-  public function __construct()
+  public function __construct($service, $section)
   {
+    $this->service = $service;
+    $this->section = $section;
   }
   /**
-   * setHost 
-   * 
-   * @param mixed $host 
+   * setHost
+   *
+   * @param mixed $host
    * @access public
    * @return void
    */
   public function setHost($host)
   {
-    $this->host = $host ? $host : 'http://localhost:5125';
+    $this->host = $host;
   }
   /**
-   * setLogger 
-   * 
-   * @param mixed $logger 
+   * setLogger
+   *
+   * @param mixed $logger
    * @access public
    * @return void
    */
@@ -39,8 +44,8 @@ class MacOS
     $this->logger = $logger;
   }
   /**
-   * execute 
-   * 
+   * execute
+   *
    * @access public
    * @return void
    */
@@ -55,8 +60,8 @@ class MacOS
   }
 
   /**
-   * vmstat 
-   * 
+   * vmstat
+   *
    * @access public
    * @return void
    */
@@ -68,19 +73,16 @@ class MacOS
       $line = preg_replace('/ +/', ' ', $line);
       $columns = explode(":", $line);
 
-
-
-
       $id    = str_replace(array('*',' '), '-', trim($columns[0]));
       $value = str_replace('.', '', trim($columns[1]));
 
-      $this->send('/api/host/teraren/vm_stat_'.$id, array('number'  => $value));
+      $this->send('vm_stat_'.$id, array('number'  => $value));
     }
   }
 
   /**
-   * bandwidth 
-   * 
+   * bandwidth
+   *
    * @access public
    * @return void
    */
@@ -97,14 +99,14 @@ class MacOS
       $id = str_replace('*', '', trim($columns[0]));
 
 
-      $this->send('/api/host/teraren/bandwidth_in_' .$id, array('number'  => $columns[5]));
-      $this->send('/api/host/teraren/bandwidth_out_'.$id, array('number'  => $columns[8]));
+      $this->send('bandwidth_in_' .$id, array('number'  => $columns[5]));
+      $this->send('bandwidth_out_'.$id, array('number'  => $columns[8]));
     }
   }
 
   /**
-   * hardwareTemp 
-   * 
+   * hardwareTemp
+   *
    * @access public
    * @return void
    */
@@ -122,12 +124,12 @@ class MacOS
         continue;
       }
 
-      $this->send('/api/host/teraren/temp_'.$id, array('number'  => $temp));
+      $this->send('temp_'.$id, array('number'  => $temp));
     }
   }
   /**
-   * disk 
-   * 
+   * disk
+   *
    * @access public
    * @return void
    */
@@ -152,12 +154,12 @@ class MacOS
 
 
 
-      $this->send('/api/host/teraren/disk_'.$disk_id, array('number'  => $columns[2]));
+      $this->send('disk_'.$disk_id, array('number'  => $columns[2]));
     }
   }
   /**
-   * loadAverage 
-   * 
+   * loadAverage
+   *
    * @access public
    * @return void
    */
@@ -167,52 +169,55 @@ class MacOS
 
     preg_match('/([0-9\.]+) ([0-9\.]+) ([0-9\.]+)$/', $output[0], $matches);
 
-    $this->send('/api/host/teraren/la_1', array('number'  => $matches[1] * 100));
-    $this->send('/api/host/teraren/la_5', array('number'  => $matches[2] * 100));
-    $this->send('/api/host/teraren/la_15', array('number' => $matches[3] * 100));
+    $this->send('la_1', array('number'  => $matches[1] * 100));
+    $this->send('la_5', array('number'  => $matches[2] * 100));
+    $this->send('la_15', array('number' => $matches[3] * 100));
   }
   /**
-   * uptime 
-   * 
+   * uptime
+   *
    * @access public
    * @return void
    */
   public function uptime()
   {
-      exec("/usr/sbin/sysctl kern.boottime", $output);
+    exec("/usr/sbin/sysctl kern.boottime", $output);
 
-      if (!preg_match('/sec = ([0-9]+)/', $output[0], $matches)) {
-        return;
-      }
+    if (!preg_match('/sec = ([0-9]+)/', $output[0], $matches)) {
+      return;
+    }
 
-        $options = array(
-            'number' => time() - $matches[1]
-        );
-        $this->send('/api/host/teraren/uptime', $options);
+    $options = array(
+      'number' => time() - $matches[1]
+    );
+    $this->send('uptime', $options);
   }
   /**
-   * send 
-   * 
-   * @param mixed $path 
-   * @param mixed $options 
+   * send
+   *
+   * @param mixed $graph
+   * @param mixed $options
    * @access private
    * @return void
    */
-  private function send($path, $options)
+  private function send($graph, $options)
   {
-        /*
-        print_r($path);
-        print "\n";
-        print_r($options);
-         */
+    if ($this->logger) {
+      $this->logger->info($graph, $options);
+    }
 
     $option = '';
     foreach ($options as $key => $value) {
       $option .= ' ' . $key . '=' . $value;
     }
-    $command = sprintf('curl -s -F %s %s%s', $option, $this->host, $path);
+    $command = sprintf('curl -s -F %s %s/api/%s/%s/%s', $option, $this->host, $this->service, $this->section, $graph);
 
-    return exec($command, $output);
+    exec($command, $output);
+
+    if ($this->logger) {
+      $this->logger->info($command, $output);
+    }
+
   }
 }
 
