@@ -18,8 +18,11 @@ Install via Composer
 composer.json
 ```
   "require": {
-    "matsubo/growth_forecast_agent": "1.*",
+    "matsubo/growth_forecast_agent": "1.0.*",
   }
 
 ```
+
+See the following file for sample code.
+- https://github.com/matsubo/growth_forecast_agent/blob/master/bin/main.php
 
