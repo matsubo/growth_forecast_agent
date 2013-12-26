@@ -45,6 +45,17 @@ class MacOS
       $this->devices = $devices;
   }
   /**
+   * setPDO
+   *
+   * @param PDO $pdo
+   * @access public
+   * @return void
+   */
+  public function setPDO($pdo)
+  {
+      $this->pdo = $pdo;
+  }
+  /**
    * setLogger
    *
    * @param Logger $logger
@@ -63,6 +74,7 @@ class MacOS
    */
   public function execute()
   {
+    $this->mysql();
     $this->disk();
     $this->vmstat();
     $this->bandwidth();
@@ -70,6 +82,38 @@ class MacOS
     $this->hardwareTemp();
     $this->uptime();
   }
+
+  /**
+   * mysql
+   *
+   * @access public
+   * @return void
+   */
+  public function mysql()
+  {
+      if (!$this->pdo) {
+          return;
+      }
+
+      $pstmt = $this->pdo->query('show status');
+      while ($row = $pstmt->fetch(\PDO::FETCH_ASSOC)) {
+          if (!in_array($row['Variable_name'], array(
+              'Qcache_free_blocks',
+              'Qcache_free_memory',
+              'Qcache_hits',
+              'Qcache_inserts',
+              'Qcache_lowmem_prunes',
+              'Qcache_not_cached',
+              'Qcache_queries_in_cache',
+              'Qcache_total_blocks',
+          ))) {
+              continue;
+          }
+          $this->send('mysql_'.$row['Variable_name'], array('number'  => $row['Value']));
+      }
+  }
+
+
 
   /**
    * vmstat

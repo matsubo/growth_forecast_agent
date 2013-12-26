@@ -21,6 +21,20 @@ $main->setDevices(
         '/dev/disk4s2',
     )
 );
+
+
+try{
+    $database = parse_ini_file(__DIR__ . '/../config/database.ini', true);
+    $dsn = sprintf('mysql:host=%s', $database['mysql']['host']);
+    $user = $database['mysql']['user'];
+    $password = $database['mysql']['password'];
+    $conn = new \PDO($dsn, $user, $password);
+    $main->setPDO($conn);
+} catch (PDOException $e) {
+    $logger->warn($e->getMessage());
+}
+
+
 $main->execute();
 
 
