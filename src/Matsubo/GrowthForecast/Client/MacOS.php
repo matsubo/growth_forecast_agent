@@ -10,6 +10,7 @@ class MacOS
   private $logger = null;
   private $service = '';
   private $section = '';
+  private $devices = array();
   /**
    * __construct
    *
@@ -24,7 +25,7 @@ class MacOS
   /**
    * setHost
    *
-   * @param mixed $host
+   * @param string $host
    * @access public
    * @return void
    */
@@ -33,9 +34,20 @@ class MacOS
     $this->host = $host;
   }
   /**
+   * setDevices
+   * 
+   * @param array $devices
+   * @access public
+   * @return void
+   */
+  public function setDevices($devices)
+  {
+      $this->devices = $devices;
+  }
+  /**
    * setLogger
    *
-   * @param mixed $logger
+   * @param Logger $logger
    * @access public
    * @return void
    */
@@ -98,7 +110,6 @@ class MacOS
 
       $id = str_replace('*', '', trim($columns[0]));
 
-
       $this->send('bandwidth_in_' .$id, array('number'  => $columns[5]));
       $this->send('bandwidth_out_'.$id, array('number'  => $columns[8]));
     }
@@ -142,17 +153,9 @@ class MacOS
       $columns = explode(" ", $line);
       $disk_id = str_replace(array('/', '(', '('), '-', $columns[8]);
 
-      $devices = array(
-        '/dev/disk2',
-        '/dev/disk3s2',
-        '/dev/disk4s2',
-      );
-
-      if (!in_array($columns[0], $devices)) {
+      if (!in_array($columns[0], $this->devices)) {
         continue;
       }
-
-
 
       $this->send('disk_'.$disk_id, array('number'  => $columns[2]));
     }
@@ -165,12 +168,14 @@ class MacOS
    */
   public function loadAverage()
   {
-    exec("uptime", $output);
+    exec('uptime', $output);
 
-    preg_match('/([0-9\.]+) ([0-9\.]+) ([0-9\.]+)$/', $output[0], $matches);
+    if (!preg_match('/([0-9\.]+) ([0-9\.]+) ([0-9\.]+)$/', $output[0], $matches)) {
+        return;
+    }
 
-    $this->send('la_1', array('number'  => $matches[1] * 100));
-    $this->send('la_5', array('number'  => $matches[2] * 100));
+    $this->send('la_1',  array('number'  => $matches[1] * 100));
+    $this->send('la_5',  array('number'  => $matches[2] * 100));
     $this->send('la_15', array('number' => $matches[3] * 100));
   }
   /**
@@ -195,8 +200,8 @@ class MacOS
   /**
    * send
    *
-   * @param mixed $graph
-   * @param mixed $options
+   * @param string $graph
+   * @param array $options
    * @access private
    * @return void
    */
@@ -220,5 +225,3 @@ class MacOS
 
   }
 }
-
-
