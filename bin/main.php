@@ -31,7 +31,7 @@ try{
     $conn = new \PDO($dsn, $user, $password);
     $main->setPDO($conn);
 } catch (PDOException $e) {
-    $logger->warn($e->getMessage());
+    $log->warn($e->getMessage());
 }
 
 

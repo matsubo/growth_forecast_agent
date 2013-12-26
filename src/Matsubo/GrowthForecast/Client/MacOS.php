@@ -11,6 +11,7 @@ class MacOS
   private $service = '';
   private $section = '';
   private $devices = array();
+  private $pdo = null;
   /**
    * __construct
    *
@@ -74,6 +75,7 @@ class MacOS
    */
   public function execute()
   {
+    $this->apacheProcess();
     $this->mysql();
     $this->disk();
     $this->vmstat();
@@ -83,6 +85,19 @@ class MacOS
     $this->uptime();
   }
 
+
+  /**
+   * apacheProcess
+   *
+   * @access public
+   * @return void
+   */
+  public function apacheProcess()
+  {
+    exec("ps -Ax|grep httpd|grep -v grep | wc -l", $output);
+
+    $this->send('apache_process_count', array('number'  => trim($output[0])));
+  }
   /**
    * mysql
    *
@@ -94,6 +109,11 @@ class MacOS
       if (!$this->pdo) {
           return;
       }
+
+      $pstmt = $this->pdo->query('show processlist');
+      $this->send('mysql_processlist', array('number'  => $pstmt->rowCount()));
+
+
 
       $pstmt = $this->pdo->query('show status');
       while ($row = $pstmt->fetch(\PDO::FETCH_ASSOC)) {
